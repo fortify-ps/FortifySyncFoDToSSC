@@ -175,10 +175,11 @@ sync.tasks.linkReleases:
     # should be synchronized by default. This applies to both newly created application 
     # versions (see autoCreateVersions below) and previously existing application 
     # versions that are newly linked.
-    # Default values: Static, Dynamic
+    # Default values: Static, Dynamic, Mobile
     enabledFoDScanTypes: 
       - Static
-      #- Dynamic # Example to exclude dynamic scans from syncing by default
+      - Dynamic 
+      # - Mobile # Example to exclude mobile scans from syncing by default
       
     # Link SSC application versions only if there are scans to be synchronized. If set
     # to true (default), the utility will only link (and optionally create) application 

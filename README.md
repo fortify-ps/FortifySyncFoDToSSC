@@ -160,6 +160,7 @@ want to provide the `Manage attribute definitions` permission to the utility.
 	* Values: 
 		* Static
 		* Dynamic
+		* Mobile
 * `FoD Sync - Status`
 	* Category: Technical
 	* Type: Text - Multiple Lines
