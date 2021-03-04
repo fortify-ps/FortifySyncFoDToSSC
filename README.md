@@ -230,7 +230,7 @@ Some examples:
 The utility is provided as a single runnable JAR file; you will need to have a Java 
 Runtime Environment (JRE) version 1.8 or later installed in order to run the utility.
 Before running the utility, you will need to have prepared the utility configuration
-file; see [Utility Configuration](#utility-configuration)) for details.
+file; see the [Configuration File](#configuration-file)) section above for details.
 
 ### Command Line
 The generic command for starting the utility is as follows:  
