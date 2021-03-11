@@ -75,7 +75,6 @@ bootJar {
 	archiveFileName = "${rootProject.name}.jar"
 	manifest {
 		attributes(
-			'Main-Class':             "${mainClazz}",
 			'Implementation-Title':   "${project.name}",
 			'Implementation-Version': "${project.version}"
         )
@@ -155,7 +154,7 @@ jib {
 		}
 		container {
 			mainClass = 'com.fortify.sync.fod_ssc.PopulateContainerDirs'
-			jvmFlags = ["-DpopulateContainerDirs.targetMainClass=${mainClazz}", '-Dsync.config=/config/FortifySyncFoDToSSC.yml', '-Dsync.home=/work']
+			jvmFlags = ["-DpopulateContainerDirs.targetMainClass=${mainClazz}".toString(), '-Dsync.config=/config/FortifySyncFoDToSSC.yml', '-Dsync.home=/work']
 			volumes = ['/config', '/work']
 		}
 	}
