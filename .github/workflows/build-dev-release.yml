@@ -18,7 +18,7 @@ jobs:
         if: startsWith(github.ref, 'refs/heads/')
         run: |
           branch="${GITHUB_REF#refs/heads/}"
-          tag="dev_${branch//[^a-zA-Z0-9_.-]/.}" # Replace all special characters by a dot
+          tag="latest_${branch//[^a-zA-Z0-9_.-]/.}" # Replace all special characters by a dot
           version="0.$(date +'%Y%m%d.%H%M%S')-${tag}"
           echo DO_BUILD=true >> $GITHUB_ENV # We always want to do a build if we're building a branch
           echo BRANCH=${branch} >> $GITHUB_ENV
@@ -26,9 +26,7 @@ jobs:
           echo RELEASE_VERSION=${version} >> $GITHUB_ENV
           echo DOCKER_TAG=${tag} >> $GITHUB_ENV
           if [ "${branch}" == "main" ]; then
-             echo DOCKER_EXTRA_TAGS=latest_rc >> $GITHUB_ENV
-          else
-             echo DOCKER_EXTRA_TAGS=latest_${branch} >> $GITHUB_ENV             
+             echo DOCKER_EXTRA_TAGS=latest_rc >> $GITHUB_ENV      
           fi
           
           if git ls-remote --exit-code origin refs/tags/${tag} >/dev/null 2>&1; then
