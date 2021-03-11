@@ -43,7 +43,7 @@ This stand-alone utility allows for automated, scheduled synchronization of Fort
 
 * **Downloads**: https://github.com/fortify/FortifySyncFoDToSSC/releases
     * _Development releases may be unstable or non-functional. The `*-thirdparty.zip` file is for informational purposes only and does not need to be downloaded._
-* **Docker images**: https://hub.docker.com/repository/docker/fortifydocker/fortify-sync-fod-to-ssc
+* **Docker images**: https://hub.docker.com/repository/docker/fortifydocker/sync-fod-to-ssc
     * `latest` and `stable` tags point to the latest production release
     * `vX.Y.Z` and `X.Y.Z` tags point to the given patch release
     * `vX.Y` and `X.Y` tags point to the latest patch release of the given minor release

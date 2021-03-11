@@ -139,7 +139,7 @@ jar {
 
 jib {
 	to {
-		image = "rsenden/sync-fod-to-ssc:${project.properties['jibImageTag']}"
+		image = "fortifydocker/sync-fod-to-ssc:${project.properties['jibImageTag']}"
 		auth {
 			username = System.getenv('DOCKER_HUB_USER') ?: ''
 			password = System.getenv('DOCKER_HUB_TOKEN') ?: ''
