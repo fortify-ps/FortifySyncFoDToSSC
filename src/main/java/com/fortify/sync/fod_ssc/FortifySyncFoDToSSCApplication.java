@@ -116,7 +116,7 @@ public class FortifySyncFoDToSSCApplication {
 		conn.api(FoDReleaseAPI.class)
 			.queryReleases()
 			.maxResults(1)
-			.paramFields("releaseId")
+			.paramFields(false,"releaseId")
 			.build().getUnique();
 		return conn;
 	}

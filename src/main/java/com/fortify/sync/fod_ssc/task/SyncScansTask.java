@@ -280,8 +280,8 @@ public class SyncScansTask extends AbstractScheduledTask<SyncScansTaskConfig> im
 	private final JSONMap getFodRelease(String fodReleaseId) {
 		return fodConn.api(FoDReleaseAPI.class)
 				.queryReleases()
-				.releaseId(fodReleaseId)
-				.paramFields("releaseId", "applicationName", "releaseName", "staticScanDate", "dynamicScanDate", "mobileScanDate")
+				.releaseId(false, fodReleaseId)
+				.paramFields(false, "releaseId", "applicationName", "releaseName", "staticScanDate", "dynamicScanDate", "mobileScanDate")
 				.build().getUnique();
 	}
 	

@@ -60,8 +60,8 @@ import com.fortify.util.rest.json.JSONMap;
 import com.fortify.util.rest.json.preprocessor.enrich.JSONMapEnrichWithValue;
 import com.fortify.util.rest.json.preprocessor.filter.AbstractJSONMapFilter.MatchMode;
 import com.fortify.util.rest.json.preprocessor.filter.JSONMapFilterSpEL;
-import com.fortify.util.spring.SpringExpressionUtil;
 import com.fortify.util.spring.expression.SimpleExpression;
+import com.fortify.util.spring.expression.helper.DefaultExpressionHelper;
 
 /**
  * This task is responsible for automatically linking FoD releases to SSC application versions,
@@ -143,7 +143,7 @@ public class LinkReleasesTask extends AbstractScheduledTask<LinkReleasesTaskConf
 			ConfigReleaseFilters releaseFilters = config.getFod().getFilters().getRelease();
 			FoDReleasesQueryBuilder qb = fodConn.api(FoDReleaseAPI.class).queryReleases()
 				.onDemandAll()
-				.paramFilterAnd("applicationId", application.get("applicationId", String.class))
+				.paramFilterAnd(false, "applicationId", application.get("applicationId", String.class))
 				.preProcessor(new JSONMapEnrichWithValue("application", application));
 			addNotYetLinkedFilter(qb);
 			addParamFilter(qb, releaseFilters);
@@ -161,7 +161,7 @@ public class LinkReleasesTask extends AbstractScheduledTask<LinkReleasesTaskConf
 		 * @param queryConfig
 		 */
 		private final void addParamFilter(IFoDEntityQueryBuilderParamFilter<?> qb, AbstractFoDQueryConfig queryConfig) {
-			qb.paramFilterAnd(queryConfig.getFodFilterParam());
+			qb.paramFilterAnd(true, queryConfig.getFodFilterParam());
 		}
 		
 		/**
@@ -298,11 +298,11 @@ public class LinkReleasesTask extends AbstractScheduledTask<LinkReleasesTaskConf
 		}
 
 		private String getSSCVersionDescription(JSONMap fodRelease) {
-			return SpringExpressionUtil.evaluateTemplateExpression(fodRelease, config.getSsc().getVersionDescriptionExpression(), String.class);
+			return DefaultExpressionHelper.get().evaluateTemplateExpression(fodRelease, config.getSsc().getVersionDescriptionExpression(), String.class);
 		}
 
 		private String getSSCApplicationDescription(JSONMap fodRelease) {
-			return SpringExpressionUtil.evaluateTemplateExpression(fodRelease, config.getSsc().getApplicationDescriptionExpression(), String.class);
+			return DefaultExpressionHelper.get().evaluateTemplateExpression(fodRelease, config.getSsc().getApplicationDescriptionExpression(), String.class);
 		}
 
 		/**
@@ -353,7 +353,7 @@ public class LinkReleasesTask extends AbstractScheduledTask<LinkReleasesTaskConf
 
 		private void addConfigurableAttributeEntry(MultiValueMap<String, Object> result, Entry<String, List<String>> entry, JSONMap release) {
 			for ( String expr : entry.getValue() ) {
-				Object value = SpringExpressionUtil.evaluateTemplateExpression(release, expr, Object.class);
+				Object value = DefaultExpressionHelper.get().evaluateTemplateExpression(release, expr, Object.class);
 				if ( value!=null ) {
 					result.add(entry.getKey(), value);
 				}

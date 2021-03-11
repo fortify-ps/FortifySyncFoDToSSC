@@ -25,40 +25,25 @@
 
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '2.2.1.RELEASE'
-	id 'io.spring.dependency-management' version '1.0.8.RELEASE'
-	id "io.freefair.lombok" version "4.1.2"
-	id "com.jfrog.bintray" version "1.8.4"
-	id 'org.ajoberstar.grgit' version "4.0.0"
-	id 'com.github.jk1.dependency-license-report' version '1.12'
-	id "org.kordamp.gradle.markdown" version "2.0.0"
-	id 'com.google.cloud.tools.jib' version '2.2.0'
+	id 'org.springframework.boot' version '2.4.3'
+	id "io.freefair.lombok" version '5.3.0'
+	id 'com.github.jk1.dependency-license-report' version '1.16'
+	id "org.kordamp.gradle.markdown" version "2.2.0"
+	id 'com.google.cloud.tools.jib' version '2.8.0'
 }
 
 group = 'com.fortify.sync.fod-ssc'
 
 ext {
-	gradleHelpersLocation = "https://raw.githubusercontent.com/fortify-ps/gradle-helpers/1.2"
+	mainClazz = 'com.fortify.sync.fod_ssc.FortifySyncFoDToSSCApplication'
+	gradleHelpersLocation = "https://raw.githubusercontent.com/fortify-ps/gradle-helpers/1.5"
 }
 
 apply from: "${gradleHelpersLocation}/repo-helper.gradle"
 apply from: "${gradleHelpersLocation}/version-helper.gradle"
-
-// Project and plugin version based on SCM information
-version = getProjectVersionAsBetaOrRelease(true)
-ext {
-	betaOrReleaseLabel = getBetaOrReleaseLabel() 
-	bintrayRepo = "${betaOrReleaseLabel}"
-	bintrayPkgName = "${rootProject.name}"
-	bintrayDownloadContainerName = getProjectVersionAsBetaOrRelease(false)
-	projectLicense = 'MIT'
-}
-
 apply from: "${gradleHelpersLocation}/thirdparty-helper.gradle"
-apply from: "${gradleHelpersLocation}/bintray-binaries-helper.gradle"
 apply from: "${gradleHelpersLocation}/readme2html.gradle"
 
-apply plugin: 'java'
 sourceCompatibility = 1.8
 
 configurations.all {
@@ -66,38 +51,39 @@ configurations.all {
 	resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
 }
 
-configurations {
-	developmentOnly
-	runtimeClasspath {
-		extendsFrom developmentOnly
-	}
-}
-
-if (project.hasProperty('fortify')) {
-	tasks.withType(JavaCompile) {
-	    source = delombok
-	}
-	// For some reason tests fail due to the source = delombok setting above
-	// We don't need to run tests anyway during SCA translation, so we disable tests here
-	test.enabled = false
-}
-
 dependencies {
-	// Spring dependencies
+	implementation platform('com.fortify.client.api:fortify-client-api-bom:5.8')
+	implementation platform(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES)
+	
+	implementation 'commons-lang:commons-lang'	
+	implementation 'com.fasterxml.jackson.core:jackson-core'
+	implementation 'com.fasterxml.jackson.core:jackson-databind'
+	implementation 'com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider'
 	implementation 'org.springframework.boot:spring-boot-starter-quartz'
 	testImplementation('org.springframework.boot:spring-boot-starter-test') {
 		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
 	}
 	
 	// Fortify client API dependencies
-	implementation('com.fortify.client.api:client-api-ssc') { changing = true }
-	implementation('com.fortify.client.api:client-api-fod') { changing = true }
+	implementation('com.fortify.client.api:common-spring')  { changing = false }
+	implementation('com.fortify.client.api:common-rest')    { changing = false }
+	implementation('com.fortify.client.api:client-api-ssc') { changing = false }
+	implementation('com.fortify.client.api:client-api-fod') { changing = false }
 }
 
-dependencyManagement {
-	imports {
-		mavenBom("com.fortify.client.api:fortify-client-api:5.5")
+bootJar {
+	archiveFileName = "${rootProject.name}.jar"
+	manifest {
+		attributes(
+			'Main-Class':             "${mainClazz}",
+			'Implementation-Title':   "${project.name}",
+			'Implementation-Version': "${project.version}"
+        )
 	}
+}
+
+ext {
+	thirdPartyBaseName = "${rootProject.name}"
 }
 
 test {
@@ -106,10 +92,10 @@ test {
 
 task dist(type: Zip) {
 	dependsOn 'build', 'readme2html'
-	archiveFileName = "${rootProject.name}-${project.version}.zip"
+	archiveFileName = "${rootProject.name}.zip"
 	destinationDirectory = file("$buildDir/dist")
-	from("${libsDir}") {
-		include "${rootProject.name}-${project.version}.jar"
+	from("${buildDir}/${libsDirName}") {
+		include "${rootProject.name}.jar"
 	}
 	from "${buildDir}/html"
 	from("${projectDir}") {
@@ -117,17 +103,6 @@ task dist(type: Zip) {
 		include "LICENSE.TXT"
 	}
 }
-
-bintray {
-    filesSpec {
-       from("${buildDir}/dist") {
-          include "*.zip"
-       }
-       into '.'
-    }
-}
-_bintrayRecordingCopy.dependsOn 'clean', 'dist', 'distThirdParty'
-
 
 task copyExtraJibFiles(type: Copy) {
 	into "${buildDir}/jibExtraFiles"
@@ -141,14 +116,34 @@ task copyExtraJibFiles(type: Copy) {
 	}
 }
 
+gradle.taskGraph.whenReady { graph ->
+    if (graph.hasTask(':jib')) {
+    	if (!project.hasProperty('jibImageTag')) {
+        	throw new GradleException("Property jibImageTag must be set when executing jib task")
+        }
+    	def jibExtraImageTagsString = project.properties["jibExtraImageTags"]?.trim()
+    	if ( jibExtraImageTagsString ) {
+    		jib.to.tags = jibExtraImageTagsString.split(',') as List
+    	}
+    } 
+}
+
+// Configuration for jar-file used by jib
+jar {
+	manifest {
+		attributes(
+			'Implementation-Title':   "${project.name}",
+			'Implementation-Version': "${project.version}"
+        )
+	}
+}
 
 jib {
 	to {
-		image = "rsenden/sync-fod-to-ssc:${getProjectVersionAsBetaOrRelease(false)}"
-		tags = ['latest', "latest-"+betaOrReleaseLabel]
+		image = "rsenden/sync-fod-to-ssc:${project.properties['jibImageTag']}"
 		auth {
-			username = System.getenv('DOCKER_IO_USER')
-			password = System.getenv('DOCKER_IO_PASSWORD')
+			username = System.getenv('DOCKER_HUB_USER') ?: ''
+			password = System.getenv('DOCKER_HUB_TOKEN') ?: ''
 		}
 		extraDirectories {
 			paths = ['src/main/jib', "${buildDir}/jibExtraFiles"]
@@ -160,7 +155,7 @@ jib {
 		}
 		container {
 			mainClass = 'com.fortify.sync.fod_ssc.PopulateContainerDirs'
-			jvmFlags = ['-DpopulateContainerDirs.targetMainClass=com.fortify.sync.fod_ssc.FortifySyncFoDToSSCApplication', '-Dsync.config=/config/FortifySyncFoDToSSC.yml', '-Dsync.home=/work']
+			jvmFlags = ["-DpopulateContainerDirs.targetMainClass=${mainClazz}", '-Dsync.config=/config/FortifySyncFoDToSSC.yml', '-Dsync.home=/work']
 			volumes = ['/config', '/work']
 		}
 	}
